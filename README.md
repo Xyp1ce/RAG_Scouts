@@ -111,11 +111,11 @@ RAG_Scouts/
    # .venv\Scripts\activate    # En Windows
    ```
 
-2. **Instalar dependencias base:**
+2. **Instalar dependencias:**
    ```bash
-   pip install google-genai python-dotenv
+   pip install -r requirements.txt
    ```
-   *(Más adelante se añadirán `chromadb`, `fastapi`, `uvicorn` y `pypdf` en `requirements.txt`.)*
+   *(Más adelante se añadirán `chromadb` y `pypdf` cuando se integre el módulo de ingesta RAG.)*
 
 3. **Configurar la API Key:**
    Asegúrate de tener tu clave de Google AI Studio en el archivo `.env`:
@@ -123,10 +123,31 @@ RAG_Scouts/
    API_KEY=tu_api_key_aqui
    ```
 
-4. **Probar conexión básica con Gemini:**
+4. **Probar conexión básica con Gemini (opcional):**
    ```bash
    python chat_basico.py
    ```
+
+---
+
+## Levantar el Servidor y la Interfaz Web
+
+1. **Iniciar la API (Backend con FastAPI + Uvicorn)** desde la raíz del proyecto (con el entorno virtual activado):
+   ```bash
+   uvicorn src.api:app --reload
+   ```
+   El servidor quedará disponible en `http://127.0.0.1:8000` con los endpoints:
+   * `GET /health` — Verificación de estado del servidor.
+   * `POST /chat` — Respuesta completa del asistente.
+   * `POST /chat/stream` — Respuesta en tiempo real (*streaming*), utilizada por el frontend.
+
+2. **Abrir la interfaz del chatbot (Frontend):**
+   * **Opción A (servidor local recomendado):** en otra terminal, ejecuta:
+     ```bash
+     python3 -m http.server 5500 --directory frontend
+     ```
+     y abre `http://localhost:5500` en tu navegador.
+   * **Opción B:** abre directamente el archivo `frontend/index.html` en tu navegador.
 
 ---
 

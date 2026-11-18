@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG Scouts — Asistente ASMAC 2026</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-badge" aria-hidden="true">⚜</div>
+        <div>
+          <h1>RAG Scouts</h1>
+          <p>Asistente de Especialidades ASMAC 2026</p>
+        </div>
+      </div>
+      <button id="clear-btn" class="btn-secondary" type="button">Nueva consulta</button>
+    </header>
+
+    <main id="chat-messages" class="chat-messages" aria-live="polite">
+      <div class="message assistant">
+        <div class="avatar">⚜</div>
+        <div class="bubble">
+          <p>¡Hola! Soy el asistente de <strong>RAG Scouts</strong>.</p>
+          <p>Describe una acción, palabra clave o proyecto que un Scout quiera realizar y te ayudaré a identificar a qué área de especialidad corresponde.</p>
+          <div class="suggestions">
+            <button class="chip" type="button" data-prompt="Quiero hacer una actividad de primeros auxilios en campamento">Primeros auxilios en campamento</button>
+            <button class="chip" type="button" data-prompt="Un Scout quiere diseñar una app móvil para su comunidad">Diseñar una app móvil comunitaria</button>
+            <button class="chip" type="button" data-prompt="Queremos organizar una jornada de reforestación y reciclaje">Reforestación y reciclaje</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="composer-wrap">
+      <form id="chat-form" class="composer">
+        <textarea
+          id="user-input"
+          rows="1"
+          placeholder="Describe la acción o proyecto del Scout..."
+          aria-label="Mensaje para el asistente"
+          required
+        ></textarea>
+        <button id="send-btn" type="submit" aria-label="Enviar mensaje">Enviar</button>
+      </form>
+      <p class="hint">Enter para enviar · Shift + Enter para salto de línea</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
