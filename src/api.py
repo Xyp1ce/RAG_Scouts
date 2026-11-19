@@ -60,7 +60,9 @@ def chat(req: ChatRequest):
                 system_instruction=SYSTEM_INSTRUCTION,
             ),
         )
-        return ChatResponse(reply=response.text or "No se recibió respuesta del modelo.")
+        return ChatResponse(
+            reply=response.text or "No se recibió respuesta del modelo."
+        )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Error al consultar Gemini: {exc}")
 
