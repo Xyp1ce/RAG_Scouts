@@ -24,12 +24,12 @@ El usuario describe una palabra, acción o proyecto que el Scout desea realizar 
 1. **Identifica y clasifica** automáticamente a qué **área de desempeño** (y especialidad) corresponde.
 2. **Justifica la respuesta** basándose únicamente en los manuales y lineamientos oficiales de ASMAC 2026 almacenados en la base vectorial, evitando alucinaciones.
 
-### Estrategia de Conocimiento Dual (Normativa + Datos Sintéticos)
+### Estrategia de Conocimiento Dual (Normativa + Ejemplos)
 
 El sistema combina dos fuentes dentro de la base vectorial (**ChromaDB**), diferenciadas mediante **metadatos** (`tipo: "normativa"` vs. `tipo: "sintetico"`, `area`, `especialidad`, `rama`):
 
-* **Normativa oficial:** Manuales, esquemas y lineamientos de ASMAC 2026 que aportan el sustento formal para las respuestas.
-* **Base de datos sintética:** Conjunto amplio de descripciones cotidianas de acciones y proyectos típicos de Scouts mapeados a su área correspondiente. Esto sirve como puente semántico cuando el usuario utiliza términos coloquiales que no aparecen textualmente en el reglamento.
+* **Normativa oficial:** Manuales, esquemas y lineamientos de ASMAC que aportan el sustento formal para las respuestas.
+* Base de datos de referencia: Conjunto amplio de especialidades divididas en las 4 secciones que existen (Manada, Tropa, Comunidad y Clan) las cuales estarán mapeadas a su área correspondiente. Esto sirve como puete semántico cuando el usuario utiliza término coloquiales qu eno aparecen textualmente o no hay referencia en el reglamento. 
 
 ---
 
@@ -37,7 +37,7 @@ El sistema combina dos fuentes dentro de la base vectorial (**ChromaDB**), difer
 
 ### 1. Fase de Ingesta (Offline / Preparación)
 ```text
-[ Manuales ASMAC 2026 ] + [ Datos Sintéticos ]
+[ Manuales ASMAC ] + [ Datos Especialidades]
                    │
                    ▼ (Limpieza + Chunking + Metadatos)
          [ Embeddings de Gemini ] (en lotes / batches)
@@ -51,7 +51,7 @@ El sistema combina dos fuentes dentro de la base vectorial (**ChromaDB**), difer
 [ Página Web (Chatbot UI) ]
            │  POST /chat
            ▼
-[ Backend API (FastAPI) ]
+    [ Backend API (FastAPI) ]
       │                   │
       ▼ (Top-K similitud) ▼ (Prompt + Contexto recuperado)
 [ ChromaDB ]         [ Gemini LLM ]
@@ -80,7 +80,6 @@ El sistema combina dos fuentes dentro de la base vectorial (**ChromaDB**), difer
 RAG_Scouts/
 ├── data/
 │   ├── normativa/       # PDFs, manuales o textos oficiales de ASMAC 2026
-│   └── sinteticos/      # CSV/JSON con acciones de ejemplo y su área correspondiente
 ├── chroma_db/           # Base vectorial persistente en disco (generada en la ingesta)
 ├── src/
 │   ├── ingest.py        # Lee data/, limpia, genera embeddings en lotes y guarda en ChromaDB
@@ -115,7 +114,7 @@ RAG_Scouts/
    ```bash
    pip install -r requirements.txt
    ```
-   *(Más adelante se añadirán `chromadb` y `pypdf` cuando se integre el módulo de ingesta RAG.)*
+   *(Más adelante se añadirán `chromadb` y posiblemente `pypdf` cuando se integre el módulo de ingesta RAG.)*
 
 3. **Configurar la API Key:**
    Asegúrate de tener tu clave de Google AI Studio en el archivo `.env`:
@@ -153,7 +152,7 @@ RAG_Scouts/
 
 ## Consideraciones del Nivel Gratuito (Free Tier)
 
-* **Límites de peticiones (RPM / RPD):** Al ingestar la base sintética y los manuales, agrupa los fragmentos en **lotes (*batches*)** para evitar errores `429 RESOURCE_EXHAUSTED` y persiste los vectores en `chroma_db/` para no recalcularlos.
+* **Límites de peticiones (RPM / RPD):** Al ingestar los manuales y especialidades de referencia, agrupa los fragmentos en **lotes (*batches*)** para evitar errores `429 RESOURCE_EXHAUSTED` y persiste los vectores en `chroma_db/` para no recalcularlos.
 * **Privacidad:** En el nivel gratuito de Google AI Studio los datos enviados pueden utilizarse para mejorar el servicio; evita incluir datos personales reales o información confidencial durante las pruebas.
 
 ---
