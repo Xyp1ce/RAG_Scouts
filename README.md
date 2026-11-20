@@ -26,7 +26,7 @@ El usuario describe una palabra, acción o proyecto que el Scout desea realizar 
 
 ### Estrategia de Conocimiento Dual (Normativa + Ejemplos)
 
-El sistema combina dos fuentes dentro de la base vectorial (**ChromaDB**), diferenciadas mediante **metadatos** (`tipo: "normativa"` vs. `tipo: "sintetico"`, `area`, `especialidad`, `rama`):
+El sistema combina dos fuentes dentro de la base vectorial (**ChromaDB**), diferenciadas mediante **metadatos** (`tipo: "normativa"` vs. `tipo: "especialidades ejemplo"`, `area`, `especialidad`, `rama`):
 
 * **Normativa oficial:** Manuales, esquemas y lineamientos de ASMAC que aportan el sustento formal para las respuestas.
 * Base de datos de referencia: Conjunto amplio de especialidades divididas en las 4 secciones que existen (Manada, Tropa, Comunidad y Clan) las cuales estarán mapeadas a su área correspondiente. Esto sirve como puete semántico cuando el usuario utiliza término coloquiales qu eno aparecen textualmente o no hay referencia en el reglamento. 
