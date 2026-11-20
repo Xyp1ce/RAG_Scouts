@@ -51,10 +51,6 @@ Protección del planeta
 
 REFLEXIONO ¿Qué cosas nuevas aprendí? ¿Cómo me siento de poder ayudar a los demás con mis habilidades? ¿Cómo me sentí con las personas que me ayudaron a obtener mi especialidad? ¿Cuáles problemas me encontré y cómo los resolví? ¿Qué consejo le daría a quienes quisieran lograr esta especialidad?
 
-## Elaboró
-
-Laura Sánchez, SJME G20 PUE, lausabina93@gmail.com
-
 ## MEDIDAS DE SEGURIDAD
 
 - Al revisar residuos, hacerlo en acompañamiento de un adulto.

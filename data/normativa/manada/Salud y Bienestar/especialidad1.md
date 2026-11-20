@@ -43,10 +43,6 @@ A SALVO DEL PELIGRO
 
 REFLEXIONO ¿Qué cosas nuevas aprendí? ¿Cómo me siento de poder ayudar a los demás con mis habilidades? ¿Cómo me sentí con las personas que me ayudaron a obtener mi especialidad? ¿Cuáles problemas me encontré y cómo los resolví? ¿Qué consejo le daría a quienes quisieran lograr esta especialidad?
 
-## Elaboró
-
-Elena Limón Amador 2211571056
-
 ## MEDIDAS DE SEGURIDAD
 
 Acompañar en todo momento a la lobezna o lobato.

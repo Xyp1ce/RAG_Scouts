@@ -49,10 +49,6 @@ Naturaleza y Biodiversidad
 
 REFLEXIONO ¿Qué cosas nuevas aprendí? ¿Cómo me siento de poder ayudar a los demás con mis habilidades? ¿Cómo me sentí con las personas que me ayudaron a obtener mi especialidad? ¿Cuáles problemas me encontré y cómo los resolví? ¿Qué consejo le daría a quienes quisieran lograr esta especialidad?
 
-## Elaboró
-
-Francisco Nivon Roblero
-
 ## MEDIDAS DE SEGURIDAD
 
 - No ingresar a espacios restringidos.

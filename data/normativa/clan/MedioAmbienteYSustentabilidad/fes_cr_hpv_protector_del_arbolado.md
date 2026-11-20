@@ -49,10 +49,6 @@ ODS A LOS QUE ABONA
 
 * 15 Vida de ecosistemas terrestres
 
-## Elaboró
-
-Adaptado por SCNPJ
-
 ## MEDIDAS DE SEGURIDAD
 
 * Cualquier árbol que represente un riesgo deberá ser reportado y no intervenido directamente.
