@@ -50,10 +50,6 @@ ODS A LOS QUE ABONA
 * 11 Ciudades y comunidades sostenibles
 * 16 Paz, justicia e instituciones sólidas
 
-## Elaboró
-
-VCL/PROV.COY
-
 ## MEDIDAS DE SEGURIDAD
 
 * Uso de Equipo de Protección Personal (EPP), (especialmente al cortar madera, usar pinturas, lacas o aerosoles).

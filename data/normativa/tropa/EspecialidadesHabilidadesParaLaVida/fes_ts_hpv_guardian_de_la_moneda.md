@@ -51,14 +51,9 @@ ODS A LOS QUE ABONA
 
 * 4 Educación de calidad
 
-## Elaboró
-
-ANA CAROLINA HUERTA ORTEGA, BAJA CALIFORNIA
-
 ## MEDIDAS DE SEGURIDAD
 
 * No divulgar información o documentos financieros.
-
 
 # FICHA DE ESPECIALIDAD SCOUT ANEXO
 
@@ -106,7 +101,6 @@ En estos frascos repartirás el dinero que recibas (como por mesada, cumpleaños
 | 2/octubre | $80 | | $600 |
 | 3/oct | | -$50 | $550 |
 
-
 # FICHA DE ESPECIALIDAD SCOUT ANEXO
 
 TÍTULO
@@ -140,7 +134,6 @@ Esta es una actividad que el asesor o scouter puede ir desarrollando a lo largo 
 6.- Ya avanzado el juego, se aplica el factor sorpresa del Hacker. El cual obtiene de manera tramposa los datos de la tarjeta (pedir ayuda a algún otro scouter o scout que no esté realizando la especialidad). En caso de obtener los datos, se vaciará la cuenta del muchacho. Mismo caso si se encuentra la tarjeta perdida.
 
 * Reflexiona sobre la actividad, y finaliza revisando un estado de cuenta bancario real. Observa cuáles son las partes que lo conforman, los datos que debes proteger, cómo se ven reflejados los movimientos, y todas las pequeñas deducciones por manejo de cuenta, impuestos, etc.
-
 
 # FICHA DE ESPECIALIDAD SCOUT ANEXO
 

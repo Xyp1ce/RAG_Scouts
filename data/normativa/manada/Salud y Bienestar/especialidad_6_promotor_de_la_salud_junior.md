@@ -53,10 +53,6 @@ Salud y autocuidado.
 
 REFLEXIONO ¿Qué cosas nuevas aprendí? ¿Cómo me siento de poder ayudar a los demás con mis habilidades? ¿Cómo me sentí con las personas que me ayudaron a obtener mi especialidad? ¿Cuáles problemas me encontré y cómo los resolví? ¿Qué consejo le daría a quienes quisieran lograr esta especialidad?
 
-## Elaboró
-
-Alicia Huerta Valdés, akelahvenado13@gmail.com
-
 ## MEDIDAS DE SEGURIDAD
 
 - Estar acompañada de sus figuras cuidadoras durante el desarrollo de las acciones.
