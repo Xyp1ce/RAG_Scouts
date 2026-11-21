@@ -30,7 +30,7 @@ Se desarrollará la Interfaz Gráfica de Usuario (GUI) en la cual el usuario pod
 
 Una vez generada la base, se integrará un LLM el cual será el encargado de procesar las consultas del usuario y generar respuestas en base al contexto dado por el sistema RAG. De esta manera, cuando el usuario ingrese una palabra o acción el sistema consultará la base de conocimiento para generar una respuesta justificada. 
 
-Para las variables sintéticas se necesitan definir las características de las acciones y proyectos que un Scout propondrá de manera típica. Con base a estos datos se creará una base de datos sintética masiva que relacione distintas formas de describir una acción con su área de desempeño correspondiente.
+Para reforzar la recuperación semántica ante descripciones coloquiales, la base de conocimiento se complementa con fichas reales de especialidades organizadas por las cuatro secciones (Manada, Tropa, Comunidad y Clan) y etiquetadas con sus metadatos de área de desempeño correspondiente, permitiendo relacionar distintas formas de describir una acción con su área oficial.
 
 # Resultados esperados
 Como resultado de la implementación de un sistema RAG integrado con un modelo de lenguaje grande (LLM), se espera desarrollar una herramienta capaz de identificar y clasificar automáticamente las palabras o acciones ingresadas por el usuario, relacionándolas con las áreas de desempeño correspondientes. Con esto, se busca facilitar la búsqueda de información, proporcionar respuestas relevantes y reducir el tiempo que el usuario necesita para encontrar la información que desea.
