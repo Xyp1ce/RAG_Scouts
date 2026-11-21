@@ -8,8 +8,13 @@ Sistema de **Generación Aumentada por Recuperación (RAG)** conectado a una int
 
 La **ASMAC** es un movimiento educativo sin fines de lucro enfocado en el desarrollo continuo de jóvenes de **6 a 22 años**. Una de sus herramientas principales son las **especialidades** (insignias que el Scout porta en su uniforme al completar actividades de su interés).
 
-En **2026** se implementó un cambio nacional en la logística y clasificación de las especialidades, ampliando considerablemente la variedad de áreas de desempeño para lograr mayor especificidad. Sin embargo:
+En **2026** se implementó un cambio nacional en la logística y clasificación de las especialidades, reorganizándolas en **4 áreas de desempeño**:
+* **Habilidades para la vida**
+* **Medio Ambiente y Sustentabilidad**
+* **Paz y Acción Comunitaria**
+* **Salud y Bienestar**
 
+Sin embargo:
 * La capacitación a los adultos responsables suele concentrarse en pláticas cortas donde es difícil asimilar toda la normativa nueva.
 * Las dudas sobre a qué área pertenece una actividad retrasan el inicio de la documentación necesaria para que los jóvenes obtengan su insignia.
 
@@ -17,19 +22,19 @@ En **2026** se implementó un cambio nacional en la logística y clasificación 
 
 ## Propuesta
 
-Desarrollar una aplicación web con **interfaz conversacional (GUI estilo Gemini / ChatGPT)** respaldada por un **sistema RAG** conectado a un **LLM (Gemini)**.
+Una aplicación web con **interfaz conversacional (GUI estilo Gemini / ChatGPT)** respaldada por un **sistema RAG** conectado a **Google Gemini**.
 
-El usuario describe una palabra, acción o proyecto que el Scout desea realizar y el sistema:
+El usuario describe una palabra clave, acción o proyecto que el Scout desea realizar y el sistema:
 
-1. **Identifica y clasifica** automáticamente a qué **área de desempeño** (y especialidad) corresponde.
-2. **Justifica la respuesta** basándose únicamente en los manuales y lineamientos oficiales de ASMAC 2026 almacenados en la base vectorial, evitando alucinaciones.
+1. **Identifica y clasifica** automáticamente a qué **área de desempeño** (y categoría/tema relacionado) corresponde.
+2. **Justifica la respuesta** basándose únicamente en la normativa y fichas oficiales de ASMAC 2026 almacenadas en la base vectorial, evitando alucinaciones.
 
-### Estrategia de Conocimiento Dual (Normativa + Ejemplos)
+### Estrategia de Conocimiento Dual (Normativa + Fichas de Referencia)
 
-El sistema combina dos fuentes dentro de la base vectorial (**ChromaDB**), diferenciadas mediante **metadatos** (`tipo: "normativa"` vs. `tipo: "especialidades ejemplo"`, `area`, `especialidad`, `rama`):
+El sistema combina dos fuentes dentro de la base vectorial (**ChromaDB**), diferenciadas mediante **metadatos** (`tipo: "normativa"` vs. `tipo: "especialidad_ejemplo"`, `rama`, `area`, `especialidad`, `tema_relacionado`, `fuente`):
 
-* **Normativa oficial:** Manuales, esquemas y lineamientos de ASMAC que aportan el sustento formal para las respuestas.
-* Base de datos de referencia: Conjunto amplio de especialidades divididas en las 4 secciones que existen (Manada, Tropa, Comunidad y Clan) las cuales estarán mapeadas a su área correspondiente. Esto sirve como puete semántico cuando el usuario utiliza término coloquiales qu eno aparecen textualmente o no hay referencia en el reglamento. 
+* **Normativa oficial (`docs/insignias.md`):** Lineamientos, objetivos y temas relacionados por sección y área de ASMAC 2026 que aportan el sustento formal de cada clasificación.
+* **Fichas de especialidades de referencia (`data/normativa/`):** Conjunto de fichas reales de especialidades divididas en las **4 secciones** (*Manada*, *Tropa*, *Comunidad* y *Clan*) y mapeadas a sus **4 áreas de desempeño**. Funcionan como puente semántico cuando el usuario describe una actividad con términos coloquiales que no aparecen textualmente en la normativa general.
 
 ---
 
@@ -37,27 +42,28 @@ El sistema combina dos fuentes dentro de la base vectorial (**ChromaDB**), difer
 
 ### 1. Fase de Ingesta (Offline / Preparación)
 ```text
-[ Manuales ASMAC ] + [ Datos Especialidades]
-                   │
-                   ▼ (Limpieza + Chunking + Metadatos)
-         [ Embeddings de Gemini ] (en lotes / batches)
-                   │
-                   ▼
-          [ ChromaDB en disco ]
+[ docs/insignias.md ] + [ data/normativa/<rama>/<area>/*.md ]
+                       │
+                       ▼  src/ingesta.py (Limpieza + Chunking + Metadatos)
+             [ Embeddings de Gemini ] (gemini-embedding-001 en lotes)
+                       │
+                       ▼
+          [ ChromaDB en disco (chroma_db/) ] (similitud coseno)
 ```
 
 ### 2. Fase de Consulta (Tiempo Real)
 ```text
 [ Página Web (Chatbot UI) ]
-           │  POST /chat
+           │  POST /chat/stream  (o POST /chat)
            ▼
-    [ Backend API (FastAPI) ]
-      │                   │
-      ▼ (Top-K similitud) ▼ (Prompt + Contexto recuperado)
-[ ChromaDB ]         [ Gemini LLM ]
-                          │
-                          ▼
-             Respuesta clasificada y justificada
+[ Backend API (src/api.py) + Motor RAG (src/rag.py) ]
+      │                                     │
+      ▼ (Recuperación dual:                 ▼ (Prompt aumentado +
+         Normativa + Fichas Top-K)             Contexto recuperado)
+[ ChromaDB ]                          [ Gemini LLM ]
+                                            │
+                                            ▼
+                         Respuesta clasificada y justificada
 ```
 
 ---
@@ -66,10 +72,10 @@ El sistema combina dos fuentes dentro de la base vectorial (**ChromaDB**), difer
 
 * **Lenguaje:** Python 3.10+
 * **LLM:** Google Gemini (`gemini-3.1-flash-lite` vía SDK oficial `google-genai`)
-* **Embeddings:** Modelos de embedding de Gemini (`gemini-embedding-001`)
-* **Base de Datos Vectorial:** ChromaDB (persistencia local en disco)
+* **Embeddings:** `gemini-embedding-001` (`RETRIEVAL_DOCUMENT` en ingesta / `RETRIEVAL_QUERY` en consulta)
+* **Base de Datos Vectorial:** ChromaDB (persistencia local en disco con distancia coseno)
 * **Backend / API:** FastAPI + Uvicorn
-* **Frontend:** HTML5, CSS3 y JavaScript (`fetch` hacia la API)
+* **Frontend:** HTML5, CSS3 y JavaScript (`fetch` + *streaming*)
 * **Gestión de entorno:** `python-dotenv`
 
 ---
@@ -79,25 +85,31 @@ El sistema combina dos fuentes dentro de la base vectorial (**ChromaDB**), difer
 ```text
 RAG_Scouts/
 ├── data/
-│   ├── normativa/       # PDFs, manuales o textos oficiales de ASMAC 2026
-├── chroma_db/           # Base vectorial persistente en disco (generada en la ingesta)
+│   └── normativa/
+│       ├── manada/       # Fichas .md organizadas en las 4 áreas de desempeño
+│       ├── tropa/        # Fichas .md organizadas en las 4 áreas de desempeño
+│       ├── comunidad/    # Fichas .md organizadas en las 4 áreas de desempeño
+│       └── clan/         # Fichas .md organizadas en las 4 áreas de desempeño
+├── docs/
+│   ├── insignias.md                 # Normativa oficial consolidada de áreas y temas ASMAC 2026
+│   ├── RAG_Scouts.md                # Documento base con contexto, problemática y propuesta
+│   ├── Insiginias nuevo esquema.pdf # Material oficial de referencia
+│   └── NUEVAS INSIGINIAS 2025.pdf   # Material oficial de referencia
+├── chroma_db/            # Base vectorial persistente en disco (generada por src/ingesta.py)
 ├── src/
-│   ├── ingest.py        # Lee data/, limpia, genera embeddings en lotes y guarda en ChromaDB
-│   ├── rag.py           # Lógica RAG: consulta -> busca en ChromaDB -> genera respuesta con Gemini
-│   └── api.py           # Servidor FastAPI con POST /chat (y CORS) para el frontend
+│   ├── ingesta.py        # Limpia, fragmenta, genera embeddings en lotes y guarda en ChromaDB
+│   ├── rag.py            # Recuperación dual en ChromaDB + prompt fundamentado + generación con Gemini
+│   └── api.py            # Servidor FastAPI (GET /health, POST /chat, POST /chat/stream)
 ├── frontend/
-│   ├── index.html       # Interfaz tipo chat (estilo Gemini/ChatGPT)
-│   ├── style.css        # Estilos de la interfaz conversacional
-│   └── app.js           # Comunicación con FastAPI mediante fetch()
-├── chat_basico.py       # Script inicial de prueba de conexión con Gemini
-├── RAG_Scouts.md        # Documento base con contexto, problemática, propuesta y metodología
-├── .env                 # Variables de entorno (API_KEY de Gemini — no subir a Git)
-├── .gitignore           # Exclusión de .env, entornos virtuales y archivos temporales
-├── requirements.txt     # Dependencias del proyecto
-└── README.md            # Documentación principal del proyecto
+│   ├── index.html        # Interfaz tipo chat (estilo Gemini/ChatGPT)
+│   ├── style.css         # Estilos de la interfaz conversacional
+│   └── app.js            # Comunicación con FastAPI mediante fetch() con streaming
+├── chat_basico.py        # Script inicial de prueba de conexión con Gemini
+├── .env                  # Variables de entorno (API_KEY de Gemini — no subir a Git)
+├── .gitignore            # Exclusión de .env, .venv/, chroma_db/ y archivos temporales
+├── requirements.txt      # Dependencias del proyecto
+└── README.md             # Documentación principal del proyecto
 ```
-
-> **Nota:** Las carpetas `data/`, `chroma_db/`, `src/` y `frontend/` se irán creando conforme avance la implementación del sistema.
 
 ---
 
@@ -114,17 +126,32 @@ RAG_Scouts/
    ```bash
    pip install -r requirements.txt
    ```
-   *(Más adelante se añadirán `chromadb` y posiblemente `pypdf` cuando se integre el módulo de ingesta RAG.)*
 
 3. **Configurar la API Key:**
-   Asegúrate de tener tu clave de Google AI Studio en el archivo `.env`:
+   Crea un archivo `.env` en la raíz del proyecto con tu clave de Google AI Studio:
    ```env
    API_KEY=tu_api_key_aqui
    ```
 
-4. **Probar conexión básica con Gemini (opcional):**
+4. **Generar la base vectorial (Ingesta):**
    ```bash
-   python chat_basico.py
+   # Opcional: verificar limpieza y conteo de chunks sin consumir cuota de API
+   python -m src.ingesta --dry-run
+
+   # Ejecutar la ingesta y poblar chroma_db/
+   python -m src.ingesta --reset
+   ```
+
+5. **Probar el motor RAG desde la terminal (opcional):**
+   ```bash
+   # Solo inspección de fragmentos recuperados en ChromaDB
+   python -m src.rag --solo-buscar "actividad de primeros auxilios en campamento"
+
+   # Consulta completa con respuesta de Gemini
+   python -m src.rag "Un Scout quiere diseñar una app móvil para su comunidad"
+
+   # Filtrando explícitamente por una sección
+   python -m src.rag --rama Tropa "jornada de reforestación y reciclaje"
    ```
 
 ---
@@ -136,8 +163,8 @@ RAG_Scouts/
    uvicorn src.api:app --reload
    ```
    El servidor quedará disponible en `http://127.0.0.1:8000` con los endpoints:
-   * `GET /health` — Verificación de estado del servidor.
-   * `POST /chat` — Respuesta completa del asistente.
+   * `GET /health` — Verificación de estado del servidor y número de chunks indexados en ChromaDB.
+   * `POST /chat` — Respuesta completa del asistente junto con la rama detectada y las fuentes consultadas (acepta `message` y opcionalmente `rama` e `history`).
    * `POST /chat/stream` — Respuesta en tiempo real (*streaming*), utilizada por el frontend.
 
 2. **Abrir la interfaz del chatbot (Frontend):**
@@ -152,13 +179,13 @@ RAG_Scouts/
 
 ## Consideraciones del Nivel Gratuito (Free Tier)
 
-* **Límites de peticiones (RPM / RPD):** Al ingestar los manuales y especialidades de referencia, agrupa los fragmentos en **lotes (*batches*)** para evitar errores `429 RESOURCE_EXHAUSTED` y persiste los vectores en `chroma_db/` para no recalcularlos.
+* **Límites de peticiones (RPM / RPD):** `src/ingesta.py` agrupa los fragmentos en **lotes (*batches*)** con pausas y reintentos automáticos ante errores `429 RESOURCE_EXHAUSTED`, y persiste los vectores en `chroma_db/` para no recalcularlos en cada arranque.
 * **Privacidad:** En el nivel gratuito de Google AI Studio los datos enviados pueden utilizarse para mejorar el servicio; evita incluir datos personales reales o información confidencial durante las pruebas.
 
 ---
 
 ## Resultados Esperados
 
-* Clasificación ágil y precisa de acciones o proyectos de Scouts hacia las áreas de desempeño de **ASMAC 2026**.
+* Clasificación ágil y precisa de acciones o proyectos de Scouts hacia las **4 áreas de desempeño de ASMAC 2026**.
 * Reducción significativa del tiempo que toma a dirigentes y jóvenes localizar la especialidad adecuada e iniciar su documentación.
 * Respuestas claras, comprensibles y estrictamente fundamentadas en la documentación oficial.
