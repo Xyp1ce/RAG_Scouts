@@ -1,5 +1,4 @@
-"""Pipeline de ingesta offline para RAG Scouts (ASMAC 2026).
-
+"""
 Lee las dos fuentes de conocimiento del proyecto:
 1. Normativa oficial: docs/insignias.md (tipo="normativa")
 2. Fichas de especialidades de referencia: data/normativa/<rama>/<area>/*.md
@@ -39,11 +38,11 @@ BATCH_SIZE = 25
 BATCH_DELAY_SECONDS = 1.0
 MAX_RETRIES = 4
 
-# Parámetros de fragmentación (chunking)
+# Parámetros de fragmentación
 MAX_CHUNK_CHARS = 2600
 CHUNK_OVERLAP_CHARS = 200
 
-# Mapeos canónicos de secciones (ramas) y áreas de desempeño
+# Mapeos de secciones (ramas) y áreas de desempeño
 RAMA_CANONICA: dict[str, str] = {
     "manada": "Manada",
     "tropa": "Tropa",
@@ -82,7 +81,9 @@ BOILERPLATE_PATTERNS: list[str] = [
     r"(?m)^DE\s*$",
 ]
 
-ANEXO_SPLIT_RE = re.compile(r"(?m)^#\s*FICHA DE ESPECIALIDAD SCOUT ANEXO\s*$", re.IGNORECASE)
+ANEXO_SPLIT_RE = re.compile(
+    r"(?m)^#\s*FICHA DE ESPECIALIDAD SCOUT ANEXO\s*$", re.IGNORECASE
+)
 
 
 @dataclass
@@ -114,7 +115,9 @@ def crear_id_estable(prefijo: str, clave: str, indice: int) -> str:
     return f"{prefijo}_{digest}_{indice}"
 
 
-def dividir_por_parrafos(texto: str, max_chars: int = MAX_CHUNK_CHARS, overlap: int = CHUNK_OVERLAP_CHARS) -> list[str]:
+def dividir_por_parrafos(
+    texto: str, max_chars: int = MAX_CHUNK_CHARS, overlap: int = CHUNK_OVERLAP_CHARS
+) -> list[str]:
     """Divide texto largo respetando límites de párrafos con solapamiento configurable."""
     texto = texto.strip()
     if len(texto) <= max_chars:
@@ -147,7 +150,11 @@ def dividir_por_parrafos(texto: str, max_chars: int = MAX_CHUNK_CHARS, overlap: 
             bloque = "\n\n".join(actual)
             chunks.append(bloque)
             # Solapamiento con el cierre del bloque anterior
-            cola = bloque[-overlap:].strip() if overlap > 0 and len(bloque) > overlap else ""
+            cola = (
+                bloque[-overlap:].strip()
+                if overlap > 0 and len(bloque) > overlap
+                else ""
+            )
             if cola and len(cola) + 2 + len(parrafo) <= max_chars:
                 actual = [cola, parrafo]
                 largo_actual = len(cola) + 2 + len(parrafo)
@@ -161,9 +168,7 @@ def dividir_por_parrafos(texto: str, max_chars: int = MAX_CHUNK_CHARS, overlap: 
     return chunks
 
 
-# ---------------------------------------------------------------------------
-# Fuente 1: Normativa oficial (docs/insignias.md)
-# ---------------------------------------------------------------------------
+# Normativa oficial (docs/insignias.md)
 
 
 def parsear_normativa_insignias(ruta: Path) -> list[ChunkDocumento]:
@@ -188,7 +193,9 @@ def parsear_normativa_insignias(ruta: Path) -> list[ChunkDocumento]:
         elif "tropa" in titulo_lower:
             chunks.extend(_parsear_subsecciones_area(cuerpo, "Tropa", fuente_rel))
         elif "comunidad" in titulo_lower or "clan" in titulo_lower:
-            chunks.extend(_parsear_subsecciones_area(cuerpo, "Comunidad y Clan", fuente_rel))
+            chunks.extend(
+                _parsear_subsecciones_area(cuerpo, "Comunidad y Clan", fuente_rel)
+            )
 
     return chunks
 
@@ -267,7 +274,9 @@ def _formatear_tablas_markdown(texto: str) -> tuple[str, list[str]]:
     return limpio, nombres_encontrados
 
 
-def _parsear_subsecciones_area(cuerpo: str, rama: str, fuente_rel: str) -> list[ChunkDocumento]:
+def _parsear_subsecciones_area(
+    cuerpo: str, rama: str, fuente_rel: str
+) -> list[ChunkDocumento]:
     """Parsea bloques `### <Área>` de Tropa y Comunidad/Clan en chunks por área."""
     chunks: list[ChunkDocumento] = []
     subsecciones = re.split(r"(?m)^###\s+", cuerpo)
@@ -305,22 +314,24 @@ def _parsear_subsecciones_area(cuerpo: str, rama: str, fuente_rel: str) -> list[
     return chunks
 
 
-# ---------------------------------------------------------------------------
-# Fuente 2: Fichas de especialidades de referencia (data/normativa/**/*.md)
-# ---------------------------------------------------------------------------
+# Fichas de especialidades de referencia (data/normativa/**/*.md)
 
 
 def _extraer_nombre_especialidad(lineas_no_vacias: list[str], ruta: Path) -> str:
     """Extrae el nombre de la especialidad del contenido de la ficha."""
     for i, linea in enumerate(lineas_no_vacias[:10]):
         if "NOMBRE DE MI ESPECIALIDAD" in linea.upper():
-            if i + 1 < len(lineas_no_vacias) and not lineas_no_vacias[i + 1].startswith("#"):
+            if i + 1 < len(lineas_no_vacias) and not lineas_no_vacias[i + 1].startswith(
+                "#"
+            ):
                 return lineas_no_vacias[i + 1].strip(" .")
 
     for linea in lineas_no_vacias[:15]:
         if linea.startswith("## "):
             upper = linea.upper()
-            if not any(k in upper for k in ("NOMBRE DE MI", "FICHA DE", "MEDIDAS DE", "ODS")):
+            if not any(
+                k in upper for k in ("NOMBRE DE MI", "FICHA DE", "MEDIDAS DE", "ODS")
+            ):
                 return linea.lstrip("# ").strip(" .")
 
     # Respaldo usando el nombre del archivo
@@ -345,7 +356,12 @@ def _limpiar_texto_ficha(contenido: str) -> str:
         texto = re.sub(patron, "", texto, flags=re.IGNORECASE)
 
     # Eliminar etiquetas redundantes de cabecera (se agregan normalizadas en el encabezado)
-    texto = re.sub(r"(?m)^SECCIÓN\s*\n+\s*(?:MANADA|TROPA|COMUNIDAD|CLAN)[^\n]*\n?", "", texto, flags=re.IGNORECASE)
+    texto = re.sub(
+        r"(?m)^SECCIÓN\s*\n+\s*(?:MANADA|TROPA|COMUNIDAD|CLAN)[^\n]*\n?",
+        "",
+        texto,
+        flags=re.IGNORECASE,
+    )
     texto = re.sub(
         r"(?m)^EJE TEMÁTICO DE LA ESPECIALIDAD\s*\n+(?:[^\n#]+\n)?",
         "",
@@ -365,7 +381,9 @@ def _limpiar_texto_ficha(contenido: str) -> str:
 def parsear_fichas_especialidades(directorio: Path) -> list[ChunkDocumento]:
     """Recorre data/normativa/<rama>/<area>/*.md y genera los chunks con metadatos."""
     if not directorio.exists():
-        raise FileNotFoundError(f"No se encontró el directorio de especialidades: {directorio}")
+        raise FileNotFoundError(
+            f"No se encontró el directorio de especialidades: {directorio}"
+        )
 
     chunks: list[ChunkDocumento] = []
     archivos = sorted(directorio.rglob("*.md"))
@@ -428,9 +446,7 @@ def parsear_fichas_especialidades(directorio: Path) -> list[ChunkDocumento]:
     return chunks
 
 
-# ---------------------------------------------------------------------------
-# Embeddings (Gemini en lotes) + Persistencia (ChromaDB)
-# ---------------------------------------------------------------------------
+# Embeddings
 
 
 def generar_embeddings_en_lotes(
@@ -446,7 +462,9 @@ def generar_embeddings_en_lotes(
 
     for num_lote, inicio in enumerate(range(0, len(textos), batch_size), start=1):
         lote = textos[inicio : inicio + batch_size]
-        print(f"  -> Generando embeddings lote {num_lote}/{total_lotes} ({len(lote)} chunks)...")
+        print(
+            f"  -> Generando embeddings lote {num_lote}/{total_lotes} ({len(lote)} chunks)..."
+        )
 
         for intento in range(1, MAX_RETRIES + 1):
             try:
@@ -456,7 +474,9 @@ def generar_embeddings_en_lotes(
                     config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT"),
                 )
                 if not respuesta.embeddings or len(respuesta.embeddings) != len(lote):
-                    raise RuntimeError("Cantidad de embeddings devuelta no coincide con el lote enviado.")
+                    raise RuntimeError(
+                        "Cantidad de embeddings devuelta no coincide con el lote enviado."
+                    )
                 todos_los_vectores.extend(emb.values for emb in respuesta.embeddings)
                 break
             except Exception as exc:
@@ -464,7 +484,9 @@ def generar_embeddings_en_lotes(
                 es_rate_limit = "429" in msg or "RESOURCE_EXHAUSTED" in msg
                 if es_rate_limit and intento < MAX_RETRIES:
                     espera = 2**intento * 5
-                    print(f"     Límite de peticiones (429). Reintentando en {espera}s ({intento}/{MAX_RETRIES})...")
+                    print(
+                        f"     Límite de peticiones (429). Reintentando en {espera}s ({intento}/{MAX_RETRIES})..."
+                    )
                     time.sleep(espera)
                 else:
                     raise
@@ -490,7 +512,9 @@ def guardar_en_chromadb(
         existentes = [c.name for c in chroma_client.list_collections()]
         if COLLECTION_NAME in existentes:
             chroma_client.delete_collection(name=COLLECTION_NAME)
-            print(f"  -> Colección '{COLLECTION_NAME}' eliminada para re-creación limpia.")
+            print(
+                f"  -> Colección '{COLLECTION_NAME}' eliminada para re-creación limpia."
+            )
 
     collection = chroma_client.get_or_create_collection(
         name=COLLECTION_NAME,
@@ -504,11 +528,6 @@ def guardar_en_chromadb(
         embeddings=embeddings,
     )
     return collection.count()
-
-
-# ---------------------------------------------------------------------------
-# Punto de entrada CLI
-# ---------------------------------------------------------------------------
 
 
 def recolectar_chunks() -> list[ChunkDocumento]:
@@ -529,7 +548,9 @@ def imprimir_resumen(chunks: list[ChunkDocumento]) -> None:
     print(f"  - Normativa oficial ({NORMATIVA_MD.name}): {len(norm)} chunks")
     print(f"  - Especialidades de referencia: {len(esp)} chunks")
     if largos:
-        print(f"  - Longitud (caracteres): min={min(largos)}, promedio={sum(largos)//len(largos)}, max={max(largos)}")
+        print(
+            f"  - Longitud (caracteres): min={min(largos)}, promedio={sum(largos) // len(largos)}, max={max(largos)}"
+        )
 
     conteo_rama_area: dict[tuple[str, str], int] = {}
     for c in chunks:
@@ -542,7 +563,9 @@ def imprimir_resumen(chunks: list[ChunkDocumento]) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Ingesta de documentos ASMAC 2026 hacia ChromaDB.")
+    parser = argparse.ArgumentParser(
+        description="Ingesta de documentos ASMAC 2026 hacia ChromaDB."
+    )
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -568,7 +591,9 @@ def main() -> None:
         print("\n[Modo --dry-run] Ejemplo de chunk de normativa:\n")
         print(chunks[0].text[:600])
         print("\n[Modo --dry-run] Ejemplo de chunk de especialidad:\n")
-        ejemplo_esp = next(c for c in chunks if c.metadata["tipo"] == "especialidad_ejemplo")
+        ejemplo_esp = next(
+            c for c in chunks if c.metadata["tipo"] == "especialidad_ejemplo"
+        )
         print(ejemplo_esp.text[:600])
         print("\nDry-run completado sin errores.")
         return
@@ -579,9 +604,13 @@ def main() -> None:
     load_dotenv(BASE_DIR / ".env")
     api_key = os.getenv("API_KEY") or os.getenv("GEMINI_API_KEY")
     if not api_key:
-        raise RuntimeError("No se encontró API_KEY (ni GEMINI_API_KEY) en el archivo .env")
+        raise RuntimeError(
+            "No se encontró API_KEY (ni GEMINI_API_KEY) en el archivo .env"
+        )
 
-    print(f"\nGenerando embeddings con '{EMBEDDING_MODEL}' (lotes de {args.batch_size})...")
+    print(
+        f"\nGenerando embeddings con '{EMBEDDING_MODEL}' (lotes de {args.batch_size})..."
+    )
     client = genai.Client(api_key=api_key)
     embeddings = generar_embeddings_en_lotes(
         client=client,
@@ -591,7 +620,9 @@ def main() -> None:
 
     print(f"\nGuardando en ChromaDB ({CHROMA_DIR})...")
     total_en_db = guardar_en_chromadb(chunks, embeddings, reset=args.reset)
-    print(f"Ingesta completada con éxito. Total de vectores en '{COLLECTION_NAME}': {total_en_db}")
+    print(
+        f"Ingesta completada con éxito. Total de vectores en '{COLLECTION_NAME}': {total_en_db}"
+    )
 
 
 if __name__ == "__main__":

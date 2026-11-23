@@ -36,27 +36,28 @@ DEFAULT_K_NORMATIVA = 3
 DEFAULT_K_EJEMPLOS = 4
 MIN_SIMILARITY_SCORE = 0.35
 
-SYSTEM_INSTRUCTION = """Eres el asistente oficial de RAG Scouts para orientar a dirigentes y jóvenes sobre el sistema nacional de especialidades de la Asociación de Scouts de México (ASMAC) implementado en 2026.
+SYSTEM_INSTRUCTION = """
+Eres el asistente oficial de RAG Scouts para orientar a dirigentes y jóvenes sobre el sistema nacional de especialidades de la Asociación de Scouts de México (ASMAC).
 
 Reglas estrictas de respuesta:
-1. Fundamenta TODA tu respuesta exclusivamente en el CONTEXTO RECUPERADO proporcionado en el mensaje del usuario (normativa oficial y fichas de referencia de ASMAC 2026).
+1. Fundamenta TODA tu respuesta exclusivamente en el CONTEXTO RECUPERADO proporcionado en el mensaje del usuario (normativa oficial y fichas de referencia de ASMAC).
 2. NO inventes áreas de desempeño, nombres oficiales de insignias ni requisitos que no aparezcan en el contexto recuperado.
-3. Las únicas 4 áreas oficiales de desempeño de ASMAC 2026 son:
+3. Las únicas 4 áreas oficiales de desempeño de ASMAC son:
    - Habilidades para la vida
    - Medio Ambiente y Sustentabilidad
    - Paz y Acción Comunitaria
    - Salud y Bienestar
 4. Si la actividad descrita podría encajar en más de un área según el enfoque, indica el área principal recomendada y menciona brevemente la alternativa posible según la documentación.
-5. Si el contexto recuperado NO contiene información suficiente para clasificar la consulta o el tema está fuera del sistema de especialidades ASMAC, dilo con honestidad y sugiere al usuario dar más detalles sobre la acción o proyecto Scout.
-6. Cuando cites una ficha de especialidad de otra sección (rama) como ejemplo de referencia, aclara explícitamente a qué sección pertenece esa ficha.
+5. Si el contexto recuperado NO contiene información suficiente para clasificar la consulta o el tema está fuera del sistema de especialidades ASMAC, dilo con honestidad y sugiere al usuario dar más detalles sobre la acción o proyecto Scout, no prosigas con la respuesta a menos que el usuario aclare lo necesario.
+6. No ofrezcas ayuda con los planes de desarrollo ni a como llenar una ficha ya que no tienes la información necesaria para eso.
 
 Formato recomendado (claro, conciso y amigable en español):
-- **Área de desempeño recomendada:** <Nombre oficial del área>
-- **Categoría / Tema relacionado:** <Sub-especialidad o tema oficial del contexto, si aplica>
-- **Justificación (Normativa ASMAC 2026):** Explicación breve basada en la normativa recuperada.
+- **Área de desempeño recomendada:** <Nombre oficial del área> 
+- **Categoría / Tema relacionado:** <Sub-especialidad o tema oficial del contexto, si aplica> 
+- **Justificación (Normativa ASMAC)**: Explicación breve basada en la normativa recuperada.
 - **Especialidades de referencia similares:** Menciona 1 a 3 fichas del contexto (indicando su sección) que respalden la clasificación.
-- **Recomendación práctica:** Si el usuario no indicó la sección (Manada, Tropa, Comunidad o Clan), ofrece ajustar la orientación si especifica la rama del joven."""
-
+- **Recomendación práctica:** Si el usuario no indicó la sección (Manada, Tropa, Comunidad o Clan), ofrece ajustar la orientación si especifica la rama del joven.
+  """
 
 # Patrones cuidadosos para detectar la rama en lenguaje natural sin falsos positivos
 # (evita confundir "para su comunidad" con la sección "Comunidad de Caminantes").
@@ -158,7 +159,9 @@ def _ramas_para_normativa(rama: str | None) -> list[str] | None:
     return [rama]
 
 
-def _extraer_fragmentos_resultado(resultado: dict[str, Any]) -> list[FragmentoRecuperado]:
+def _extraer_fragmentos_resultado(
+    resultado: dict[str, Any],
+) -> list[FragmentoRecuperado]:
     """Convierte el diccionario crudo de `collection.query()` en una lista de FragmentoRecuperado."""
     ids = (resultado.get("ids") or [[]])[0]
     docs = (resultado.get("documents") or [[]])[0]
@@ -202,7 +205,9 @@ class RAGScouts:
         load_dotenv(BASE_DIR / ".env")
         resolved_key = api_key or os.getenv("API_KEY") or os.getenv("GEMINI_API_KEY")
         if not resolved_key:
-            raise RuntimeError("No se encontró API_KEY (ni GEMINI_API_KEY) en el archivo .env")
+            raise RuntimeError(
+                "No se encontró API_KEY (ni GEMINI_API_KEY) en el archivo .env"
+            )
 
         if not CHROMA_DIR.exists():
             raise RuntimeError(
@@ -237,7 +242,9 @@ class RAGScouts:
             config=types.EmbedContentConfig(task_type="RETRIEVAL_QUERY"),
         )
         if not respuesta.embeddings:
-            raise RuntimeError("Gemini no devolvió ningún vector de embedding para la consulta.")
+            raise RuntimeError(
+                "Gemini no devolvió ningún vector de embedding para la consulta."
+            )
         return list(respuesta.embeddings[0].values)
 
     def _query_seguro(
@@ -250,6 +257,7 @@ class RAGScouts:
         if n_results <= 0:
             return []
         try:
+            # no entiendo porque los errores pero funciona (se arreglará en el futuro)
             resultado = self.collection.query(
                 query_embeddings=[query_embedding],
                 n_results=n_results,
@@ -283,19 +291,25 @@ class RAGScouts:
         rama_activa = normalizar_rama(rama) or detectar_rama(consulta)
         query_embedding = self._embed_query(consulta)
 
-        # 1. Recuperar normativa oficial (docs/insignias.md)
+        # Recuperar normativa oficial (docs/insignias.md)
         where_norm = _construir_where("normativa", _ramas_para_normativa(rama_activa))
-        normativa = self._query_seguro(query_embedding, where=where_norm, n_results=k_normativa)
+        normativa = self._query_seguro(
+            query_embedding, where=where_norm, n_results=k_normativa
+        )
 
-        # 2. Recuperar fichas de especialidades de referencia (puente semántico)
+        # Recuperar fichas de especialidades de referencia (puente semántico)
         if rama_activa:
             where_esp_rama = _construir_where("especialidad_ejemplo", [rama_activa])
-            ejemplos = self._query_seguro(query_embedding, where=where_esp_rama, n_results=k_ejemplos)
+            ejemplos = self._query_seguro(
+                query_embedding, where=where_esp_rama, n_results=k_ejemplos
+            )
             # Si hay pocos resultados relevantes en esa rama específica (ej. áreas con 1 ficha),
             # complementamos con ejemplos de otras ramas para no perder el puente semántico.
             if len(ejemplos) < k_ejemplos:
                 where_esp_todas = _construir_where("especialidad_ejemplo", None)
-                extra = self._query_seguro(query_embedding, where=where_esp_todas, n_results=k_ejemplos + 2)
+                extra = self._query_seguro(
+                    query_embedding, where=where_esp_todas, n_results=k_ejemplos + 2
+                )
                 vistos = {f.chunk_id for f in ejemplos}
                 for frag in extra:
                     if frag.chunk_id not in vistos:
@@ -305,7 +319,9 @@ class RAGScouts:
                         break
         else:
             where_esp_todas = _construir_where("especialidad_ejemplo", None)
-            ejemplos = self._query_seguro(query_embedding, where=where_esp_todas, n_results=k_ejemplos + 2)
+            ejemplos = self._query_seguro(
+                query_embedding, where=where_esp_todas, n_results=k_ejemplos + 2
+            )
 
         # Deduplicar y limitar a máximo 2 chunks por archivo fuente (evita que un anexo domine Top-K)
         ejemplos_filtrados: list[FragmentoRecuperado] = []
@@ -346,13 +362,21 @@ class RAGScouts:
 
         secciones_ctx: list[str] = []
         if bloques_normativa:
-            secciones_ctx.append("### NORMATIVA OFICIAL ASMAC 2026\n\n" + "\n\n---\n\n".join(bloques_normativa))
+            secciones_ctx.append(
+                "### NORMATIVA OFICIAL ASMAC 2026\n\n"
+                + "\n\n---\n\n".join(bloques_normativa)
+            )
         if bloques_ejemplos:
             secciones_ctx.append(
-                "### FICHAS DE ESPECIALIDADES DE REFERENCIA\n\n" + "\n\n---\n\n".join(bloques_ejemplos)
+                "### FICHAS DE ESPECIALIDADES DE REFERENCIA\n\n"
+                + "\n\n---\n\n".join(bloques_ejemplos)
             )
 
-        contexto = "\n\n===\n\n".join(secciones_ctx) if secciones_ctx else "(Sin fragmentos recuperados)"
+        contexto = (
+            "\n\n===\n\n".join(secciones_ctx)
+            if secciones_ctx
+            else "(Sin fragmentos recuperados)"
+        )
         mejor_score = max((f.score for f in fragmentos), default=0.0)
         aviso_similitud = ""
         if mejor_score < MIN_SIMILARITY_SCORE:
@@ -369,7 +393,7 @@ class RAGScouts:
         )
 
         return (
-            f"CONTEXTO RECUPERADO DE LA BASE ASMAC 2026:\n\n"
+            f"CONTEXTO RECUPERADO DE LA BASE ASMAC:\n\n"
             f"{contexto}\n"
             f"{aviso_similitud}\n"
             f"---\n"
@@ -394,8 +418,14 @@ class RAGScouts:
             rol = "model" if turno.get("role") in ("assistant", "model") else "user"
             texto = (turno.get("content") or "").strip()
             if texto:
-                contents.append(types.Content(role=rol, parts=[types.Part.from_text(text=texto)]))
-        contents.append(types.Content(role="user", parts=[types.Part.from_text(text=prompt_aumentado)]))
+                contents.append(
+                    types.Content(role=rol, parts=[types.Part.from_text(text=texto)])
+                )
+        contents.append(
+            types.Content(
+                role="user", parts=[types.Part.from_text(text=prompt_aumentado)]
+            )
+        )
         return contents
 
     def consultar(
@@ -408,7 +438,9 @@ class RAGScouts:
         from google.genai import types
 
         fragmentos, rama_detectada = self.recuperar(consulta, rama=rama)
-        prompt = self.construir_prompt(consulta, fragmentos, rama_detectada=rama_detectada)
+        prompt = self.construir_prompt(
+            consulta, fragmentos, rama_detectada=rama_detectada
+        )
         contents = self._construir_contents(prompt, historial=historial)
 
         respuesta = self.genai_client.models.generate_content(
@@ -420,7 +452,9 @@ class RAGScouts:
             ),
         )
         texto = respuesta.text or "No se recibió respuesta del modelo."
-        return RespuestaRAG(reply=texto, rama_detectada=rama_detectada, fuentes=fragmentos)
+        return RespuestaRAG(
+            reply=texto, rama_detectada=rama_detectada, fuentes=fragmentos
+        )
 
     def consultar_stream(
         self,
@@ -432,7 +466,9 @@ class RAGScouts:
         from google.genai import types
 
         fragmentos, rama_detectada = self.recuperar(consulta, rama=rama)
-        prompt = self.construir_prompt(consulta, fragmentos, rama_detectada=rama_detectada)
+        prompt = self.construir_prompt(
+            consulta, fragmentos, rama_detectada=rama_detectada
+        )
         contents = self._construir_contents(prompt, historial=historial)
 
         def token_generator() -> Iterator[str]:
@@ -451,7 +487,6 @@ class RAGScouts:
         return token_generator(), fragmentos, rama_detectada
 
 
-# Singleton perezoso reutilizable desde FastAPI (src/api.py)
 _rag_instance: RAGScouts | None = None
 
 
@@ -463,14 +498,16 @@ def get_rag() -> RAGScouts:
     return _rag_instance
 
 
-# ---------------------------------------------------------------------------
-# CLI para pruebas rápidas en terminal
-# ---------------------------------------------------------------------------
+# Pruebas de CLI
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Prueba el motor RAG Scouts desde la terminal.")
-    parser.add_argument("consulta", help="Descripción de la acción, palabra clave o proyecto del Scout.")
+    parser = argparse.ArgumentParser(
+        description="Prueba el motor RAG Scouts desde la terminal."
+    )
+    parser.add_argument(
+        "consulta", help="Descripción de la acción, palabra clave o proyecto del Scout."
+    )
     parser.add_argument(
         "--rama",
         choices=["Manada", "Tropa", "Comunidad", "Clan"],
